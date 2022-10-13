@@ -1,5 +1,5 @@
+from enum import Flag
 from multiprocessing import context
-from operator import truediv
 from docxtpl import DocxTemplate
 import numbers_to_letter
 import pandas as pd 
@@ -22,7 +22,7 @@ def getDateText(date_format_num):
         'Diciembre']
     date_credit_num = date_format_num.split('/')
     #print(date_credit_num)
-    return date_credit_num[0] + ' de ' + months[int(date_credit_num[1])] + ' de ' + date_credit_num[2] + ','
+    return date_credit_num[0] + ' de ' + months[int(date_credit_num[1])] + ' de ' + date_credit_num[2]
 
 data = pd.read_csv('datacsv/12500_SIN_ACCESORIOS.csv', encoding='utf-8')
 
@@ -31,7 +31,7 @@ data = pd.read_csv('datacsv/12500_SIN_ACCESORIOS.csv', encoding='utf-8')
 
 for dt in data.index:
 
-    CONTRACT_PRINCEPS       =   DocxTemplate("layouts/PROPUESTA_CRA_PRINCEPS_VFINAL3.docx")
+    CONTRACT_PRINCEPS       =   DocxTemplate("layouts/PROPUESTA_CRA_PRINCEPS_VFINAL3 - LAYOUT.docx")
 
     context = {
         'NOMBRE_COMPLETO'   :   data['NOMBRE'][dt],
@@ -47,15 +47,10 @@ for dt in data.index:
         'ADEUDO'            :   data['ADEUDO'][dt],
         'FECHA_PAGARE'      :   str(getDateText(str(data['FECHA PAGARE'][dt]))),
         'FECHA_VIGENCIA'    :   str(getDateText(str(data['FECHA VIGENCIA'][dt]))),
-        'FECHA_FIRMA'       :   str(getDateText(str(data['FECHA FIRMA'][dt]))),
-        'clausula_LC'       :   False,
-        'clausula_PV'       :   False,
-        'clausula_FS'       :   False,
-        'clausula_GPS'      :   False,
-        'clausula_GASTOS'   :   False,
-        'clausula_R2021'    :   False,
-        'clausula_ENRUTA'   :   False,
-        'clausula_CESION_PV':   False,
+        'FECHA_FIRMA'       :  "01 de Octubre de 2022", # str(getDateText(str(data['FECHA FIRMA'][dt]))),
+
+        'clausulaDOSENGPV'   :   False,
+
         'CREDITO_ANTERIOR'  :   data['CREDITO ANTERIOR'][dt],
         'FECHA_CTO_ANTERIOR':   str(getDateText(str(data['FECHA CREDITO ANTERIOR'][dt]))),
         'MONTO_CTO_ANTERIOR_NUM':   data['MONTO CREDITO ANTERIOR'][dt],
@@ -65,28 +60,56 @@ for dt in data.index:
 
     }
 
-    #print(str(data['CREDITO PV'][dt]))
-    if str(data['CREDITO PV'][dt]) != '0':
-        context['clausula_PV']  = True
-        context['clausula_CESION_PV '] = True
-        context['FECHA_CREDITO_PV']  =   str(getDateText(str(data['FECHA PV'][dt])))
-        context['CREDITO_PV']  =     str(data['CREDITO PV'][dt]) + ','
-        context['MONTO_PV_NUM']  = data['MONTO PV'][dt]
+    #ENGANCHE PV ARRENDAMIENTO
+    if str(data['CREDITO PV2'][dt]) != '0':
+        context['clausula_PV_2']  = True
+        context['FECHA_CREDITO_PV2']  =   str(getDateText(str(data['FECHA PV2'][dt])))
+        context['CREDITO_PV2']  =     str(data['CREDITO PV2'][dt]) + ','
+        context['MONTO_PV_NUM']  = data['MONTO PV2'][dt]
         context['MONTO_PV_LETRA']  = "({} PESOS {}/100 M.N.)".format(
-            numbers_to_letter.numero_a_letras(int(float(data['MONTO PV'][dt]))).upper(),
-            str(data['MONTO PV'][dt]).split('.')[1])
+            numbers_to_letter.numero_a_letras(int(float(data['MONTO PV2'][dt]))).upper(),
+            str(data['MONTO PV2'][dt]).split('.')[1])
 
-    if str(data['CREDITO FS'][dt]) != '0':
-        context['clausula_FS']  = True
-        context['FECHA_CREDITO_FS']  =   getDateText(str(data['FECHA FS'][dt]))
-        context['CREDITO_FS']        =   str(data['CREDITO FS'][dt]) + ','
+    # OPCION 3 CREDITO DE ADQUISICION
+    if str(data['CREDITO PV2'][dt]) != '0':
+        context['clausulaPV2']  = True
+        context['FECHA_CREDITO_PV2']  =   str(getDateText(str(data['FECHA PV2'][dt])))
+        context['CREDITO_PV2']  =     str(data['CREDITO PV2'][dt]) + ','
+        context['MONTO_PV_NUM']  = data['MONTO PV2'][dt]
+        context['MONTO_PV_LETRA']  = "({} PESOS {}/100 M.N.)".format(
+            numbers_to_letter.numero_a_letras(int(float(data['MONTO PV2'][dt]))).upper(),
+            str(data['MONTO PV2'][dt]).split('.')[1])
+
+    # OPCION 3 CREDITO DE ADQUISICION
+    if str(data['CREDITO PV3'][dt]) != '0':
+        context['clausulaPV3']  = True
+        context['FECHA_CREDITO_PV3']  =   getDateText(str(data['FECHA PV3'][dt]))
+        context['CREDITO_PV3']        =   str(data['CREDITO PV3'][dt]) + ','
         context['MONTO_FS_NUM' ]     =   data['MONTO FS'][dt]
         context['MONTO_FS_LETRA']    =   "({} PESOS {}/100 M.N.)".format(
+            numbers_to_letter.numero_a_letras(int(float(data['MONTO PV3'][dt]))).upper(),
+            str(data['MONTO PV3'][dt]).split('.')[1])
+
+    if str(data['CREDITO ENG PV'][dt]) != '0':
+        context['clausulaDOSENGPV']  = True
+        context['FECHA_CREDITO_ENG_PV']  =   getDateText(str(data['FECHA ENG PV'][dt]))
+        context['CREDITO_ENG_PV']        =   str(data['CREDITO ENG PV'][dt]) + ','
+        context['MONTO_ENG_PV_NUM' ]     =   data['MONTO ENG PV'][dt]
+        context['MONTO_ENG_PV_LETRA']    =   "({} PESOS {}/100 M.N.)".format(
+            numbers_to_letter.numero_a_letras(int(float(data['MONTO ENG PV'][dt]))).upper(),
+            str(data['MONTO ENG PV'][dt]).split('.')[1])
+    
+    if str(data['CREDITO FS'][dt]) != '0':
+        context['clausulaTRESFS']  = True
+        context['FECHA_CREDITO_FS']  =   getDateText(str(data['FECHA FS'][dt]))
+        context['CREDITO_FS']        =   str(data['CREDITO FS'][dt]) + ','
+        context['MONTO_ENG_FS_NUM' ]     =   data['MONTO FS'][dt]
+        context['MONTO_ENG_FS_LETRA']    =   "({} PESOS {}/100 M.N.)".format(
             numbers_to_letter.numero_a_letras(int(float(data['MONTO FS'][dt]))).upper(),
             str(data['MONTO FS'][dt]).split('.')[1])
 
     if str(data['CREDITO GPS'][dt]) != '0':
-        context['clausula_GPS']  = True
+        context['clausulaCUATROGPS']  = True
         context['FECHA_CREDITO_GPS']  =   getDateText(str(data['FECHA GPS'][dt]))
         context['CREDITO_GPS']        =   str(data['CREDITO GPS'][dt]) + ','
         context['MONTO_GPS_NUM' ]     =   data['MONTO GPS'][dt]
@@ -95,7 +118,7 @@ for dt in data.index:
             str(data['MONTO GPS'][dt]).split('.')[1])
 
     if str(data['CREDITO GASTOS'][dt]) != '0':
-        context['clausula_GASTOS']  = True
+        context['clausulaCINCOGASTOS']  = True
         context['FECHA_CREDITO_GASTOS']  =   getDateText(str(data['FECHA GASTOS'][dt]))
         context['CREDITO_GASTOS']        =   str(data['CREDITO GASTOS'][dt]) + ','
         context['MONTO_GASTOS_NUM' ]     =   data['MONTO GASTOS'][dt]
@@ -103,17 +126,26 @@ for dt in data.index:
             numbers_to_letter.numero_a_letras(int(float(data['MONTO GASTOS'][dt]))).upper(),
             str(data['MONTO GASTOS'][dt]).split('.')[1])
 
-    if str(data['CREDITO R2021'][dt]) != '0':
-        context['clausula_R2021']  = True
-        context['FECHA_CREDITO_R2021']  =   getDateText(str(data['FECHA 2021'][dt]))
-        context['CREDITO_R2021']        =   str(data['CREDITO R2021'][dt]) + ','
-        context['MONTO_R2021_NUM' ]     =   data['MONTO R2021'][dt]
+    if str(data['CREDITO CESION PV'][dt]) != '0':
+        context['clausulaSEISCESIONPV']  = True
+        context['FECHA_CESION_PV']  =   getDateText(str(data['FECHA CESION PV'][dt]))
+        context['CREDITO_CESION_PV']        =   str(data['CREDITO CESION PV'][dt]) + ','
+        context['MONTO_CESION_PV_NUM' ]     =   data['MONTO CESION PV'][dt]
+        context['MONTO_CESION_PV_LETRA']    =   "({} PESOS {}/100 M.N.)".format(
+            numbers_to_letter.numero_a_letras(int(float(data['MONTO CESION PV'][dt]))).upper(),
+            str(data['MONTO CESION PV'][dt]).split('.')[1])
+    
+    if str(data['CREDITO RENOVACION 2021'][dt]) != '0':
+        context['clausulaSIETER2021']  = True
+        context['FECHA_CREDITO_R2021']  =   getDateText(str(data['FECHA RENOVACION 2021'][dt]))
+        context['CREDITO_R2021']        =   str(data['CREDITO RENOVACION 2021'][dt]) + ','
+        context['MONTO_R2021_NUM' ]     =   data['MONTO RENOVACION 2021'][dt]
         context['MONTO_R2021_LETRA']    =   "({} PESOS {}/100 M.N.)".format(
-            numbers_to_letter.numero_a_letras(int(float(data['MONTO R2021'][dt]))).upper(),
-            str(data['MONTO R2021'][dt]).split('.')[1])
+            numbers_to_letter.numero_a_letras(int(float(data['MONTO RENOVACION 2021'][dt]))).upper(),
+            str(data['MONTO RENOVACION 2021'][dt]).split('.')[1])
     
     if str(data['CREDITO ENRUTA'][dt]) != '0':
-        context['clausula_ENRUTA']  = True
+        context['clausulaOCHOENRUTA']  = True
         context['FECHA_CREDITO_ENRUTA']  =   getDateText(str(data['FECHA ENRUTA'][dt]))
         context['CREDITO_ENRUTA']        =   str(data['CREDITO ENRUTA'][dt]) + ','
         context['MONTO_ENRUTA_NUM' ]     =   data['MONTO ENRUTA'][dt]
@@ -121,18 +153,18 @@ for dt in data.index:
             numbers_to_letter.numero_a_letras(int(float(data['MONTO ENRUTA'][dt]))).upper(),
             str(data['MONTO ENRUTA'][dt]).split('.')[1])
 
+    if context['clausulaDOSENGPV']:
+        context['clausulaSEISCESIONPV '] = False
+        
 
-    if context['clausula_GASTOS']:
-        context['clausula_CESION_PV '] = False
-    
 
-    fileDir = 'C:/Users/Gustavo Blas/OneDrive - Financera Sustentable de México SA de CV SFP/CONTRATOS OCTUBRE/contratosPRINCEPS_12500_SIN_ACCESORIOS/'
+    fileDir = 'C:/Users/Gustavo Blas/OneDrive - Financera Sustentable de México SA de CV SFP/CONTRATOS OCTUBRE/contratosPRINCEPS_12500_SIN_ACCESORIOS_/'
 
     #print(nombreRuta)
     try:
-        os.stat('C:/Users/Gustavo Blas/OneDrive - Financera Sustentable de México SA de CV SFP/CONTRATOS OCTUBRE/contratosPRINCEPS_12500_SIN_ACCESORIOS/')
+        os.stat('C:/Users/Gustavo Blas/OneDrive - Financera Sustentable de México SA de CV SFP/CONTRATOS OCTUBRE/contratosPRINCEPS_12500_SIN_ACCESORIOS_/')
     except:
-        os.mkdir('C:/Users/Gustavo Blas/OneDrive - Financera Sustentable de México SA de CV SFP/CONTRATOS OCTUBRE/contratosPRINCEPS_12500_SIN_ACCESORIOS/')
+        os.mkdir('C:/Users/Gustavo Blas/OneDrive - Financera Sustentable de México SA de CV SFP/CONTRATOS OCTUBRE/contratosPRINCEPS_12500_SIN_ACCESORIOS_/')
     
     try:
         os.stat(fileDir)
